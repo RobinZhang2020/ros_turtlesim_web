@@ -1,0 +1,24 @@
+web端获取和显示ROS消息数据——问题解决和思路
+1.终端启动roscore和rosbridge_server：$roslaunch rosbridge_server rosbridge_websocket.launch
+2.终端发布cml_vel消息：rostopic pub /cmd_vel -r 1 geometry_msgs/Twist '{linear: {x: 0.1, y: 0, z: 0}, angular: {x: 0, y: 0, z: -0.5}}'//其中-r 1为发布频率1Hz
+3.浏览器订阅并显示cml_vel消息数据：打开sample.html，关键代码如下
+  var listener = new ROSLIB.Topic({
+    ros : ros,
+    name : '/cmd_vel',
+    messageType : 'geometry_msgs/Twist'
+  });  
+  function subscribe(){
+    listener.subscribe(function(message) {
+    document.getElementById("output").innerHTML = ('Received message on ' + listener.name + ': ' + message.data);//页面显示
+    console.info('Received message on ' + listener.name + ': ' + message.data);//console显示，info相比log能够显示数据详细信息
+    });
+  }
+
+问题来了：网页能够正常侦听到ROS发布的信息，但页面显示为undefined，console显示也是undefined
+
+解决思路：
+1.修改显示message，页面显示为Object（这里有戏？），console显示仍为undefined；
+2.发布消息换成std_msgs/String，能正常显示，说明整个侦听和显示代码是没有问题的；
+3.百度console为undefined的常见原因，将console.info里面的+加号换成，逗号，就能够显示message的详细信息（否则将数据转换成String类型），结果就是正确的ros消息，即可以通过message.linear.x等方法访问具体数据值了，BINGO！
+
+  

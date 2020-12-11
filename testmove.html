@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+
+<script type="text/javascript" src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script type="text/javascript" src="http://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+
+<script type="text/javascript" >
+  // Connecting to ROS
+  // -----------------
+
+  var ros = new ROSLIB.Ros({
+    url : 'ws://localhost:9090'
+  });
+
+  ros.on('connection', function() {
+    console.log('Connected to websocket server.');
+  });
+
+  ros.on('error', function(error) {
+    console.log('Error connecting to websocket server: ', error);
+  });
+
+  ros.on('close', function() {
+    console.log('Connection to websocket server closed.');
+  });
+
+  // Publishing a Topic
+  // ------------------
+/*
+  var cmdVel = new ROSLIB.Topic({
+    ros : ros,
+    name : '/cmd_vel',
+    messageType : 'geometry_msgs/Twist'
+  });
+
+  var twist = new ROSLIB.Message({
+    linear : {
+      x : 0.1,
+      y : 0.2,
+      z : 0.3
+    },
+    angular : {
+      x : -0.1,
+      y : -0.2,
+      z : -0.3
+    }
+  });
+  cmdVel.publish(twist);
+*/
+
+  // Subscribing to a Topic
+  // ----------------------
+  console.info('ros information');
+  console.info(ros);
+  
+  var obj;
+  var objdiv;
+  var delta=0;
+  var timer;
+  
+  var listener = new ROSLIB.Topic({
+    ros : ros,
+    name : '/turtle1/pose',
+    messageType : 'turtlesim/Pose',
+    //queue_size:100,
+    //queue_length:20,
+    throttle_rate:10
+  });
+  
+  function subscribe(){
+	  listener.subscribe(function(message) {
+	  document.getElementById("output").innerHTML = ('Received message on ' + listener.name + '----- ' +'x:'+message.x+'  y:'+message.y+'  theta:'+message.theta);
+	  obj=document.getElementById('obj');
+	    //console.info('Received message on ',listener.name,': ','x:',message.x,'  y:',message.y,' theta:',message.theta);
+	    move(message.x,message.y,message.theta);
+	    
+	  });
+	  
+	  
+	  }
+	  
+  function unsubscribe(){
+  	listener.unsubscribe();
+  }
+  
+  function move(_x,_y,_theta){
+  	
+  	obj.style.transform='rotate('+(-_theta/Math.PI*180+90)+'deg)';
+  	obj.style.left=_x/11*500-15+'px';
+  	obj.style.top=(500-_y/11*500)-15+'px';
+  	drawPath(_x/11*500,500-_y/11*500);
+  	
+  	//delta++;
+  	//console.info('move');
+  }
+  
+  function drawPath(fx,fy){
+  	console.info('#####',fx,'  ',fy);
+  	console.info('start draw path')
+  	objdiv=document.getElementById('objDiv');
+  	var c=objdiv.getContext('2d');
+  	c.strokeStyle='#ff0000';
+  	c.beginPath();
+  	c.moveTo(fx,fy);
+  	c.lineTo(fx+1,fy+1);
+  	c.closePath();
+  	c.stroke();
+  	
+  }
+  function start(){
+  	obj=document.getElementById('obj');
+  	timer=setInterval(move,100);
+  }
+  function stop(){
+  	clearInterval(timer);
+  }
+ 
+</script>
+</head>
+
+<body>
+  <h1>ros turtlesim</h1>
+  <button onclick="subscribe()">subscribe</button>
+  <button onclick="unsubscribe()">unsubscribe</button>
+  
+  
+  <p id = "output"></p>
+  <div style='background-color:rgba(255,216,0,1);height:500px;width:500px'>
+  <div style='position:absolute;height:500px;width:500px'><img id='obj' src='hydro1.png' style='position:relative;top:0px;left:0px;'/></div>
+  <div ><canvas id='objDiv' width='500' height='500'></canvas></div>
+  
+  
+  </div>
+  
+</body>
+</html>
